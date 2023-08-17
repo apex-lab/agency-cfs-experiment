@@ -78,7 +78,7 @@ class CFSMask:
         '''
         intialize the mondrian masks to be used for CFS
         '''
-        fpaths = get_files_from_subdir('mondrians', '.jpg')
+        fpaths = get_files_from_subdir('mondrians', '.tif')
         mondrians = [
             visual.ImageStim(
                 self.win,

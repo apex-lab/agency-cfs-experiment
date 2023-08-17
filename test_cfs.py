@@ -17,6 +17,6 @@ while not mask.completed:
     count += 1
     if count > max_frames:
         mask.terminate()
-    win.callOnFlip(mask.on_flip)
-    win.callOnFlip(stim.on_flip)
+    mask.on_flip() # update stimuli
+    stim.on_flip()
     win.flip()

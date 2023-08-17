@@ -3,13 +3,13 @@ import numpy as np
 
 class MaskedStimulus:
 
-    def __init__(self, win, color, mask_size, contrast, position = None):
+    def __init__(self, win, color, mask_size, contrast, position = None, mask_pos = (0, 0)):
 
         possible_positions = dict(
-            upper_right = (mask_size//4, mask_size//4),
-            upper_left = (-mask_size//4, mask_size//4),
-            lower_left = (-mask_size//4, -mask_size//4),
-            lower_right = (mask_size//4, -mask_size//4)
+            upper_right = (mask_pos[0] + mask_size//4, mask_pos[1] + mask_size//4),
+            upper_left = (mask_pos[0] - mask_size//4, mask_pos[1] + mask_size//4),
+            lower_left = (mask_pos[0] - mask_size//4, mask_pos[1] - mask_size//4),
+            lower_right = (mask_pos[0] + mask_size//4, mask_pos[1] - mask_size//4)
             )
         if position is None:
             self.position = np.random.choice([key for key in possible_positions])
@@ -30,6 +30,7 @@ class MaskedStimulus:
         self._onset = time_from_now
         self._offset = time_from_now + duration
         self._triggered = True
+        return self.position
 
     def on_flip(self):
         if not self._triggered:

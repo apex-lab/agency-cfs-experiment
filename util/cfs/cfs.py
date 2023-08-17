@@ -88,7 +88,7 @@ class CFSMask:
                 pos = self.pos,
                 color = self.color,
                 colorSpace = 'rgb',
-                opacity = 1.,
+                contrast = 1.,
                 interpolate = True
                 )
             for f in fpaths]
@@ -119,7 +119,7 @@ class CFSMask:
             font = 'Arial',
             height = self.size / 10,
             wrapWidth = None,
-            opacity = 1,
+            contrast = 1,
             depth = -4.0
             )
         return fixation

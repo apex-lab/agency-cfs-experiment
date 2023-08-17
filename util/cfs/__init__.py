@@ -1,5 +1,6 @@
 from psychopy import visual
 from .cfs import CFSMask
+from .stim import MaskedStimulus
 
 def init_window(**kwargs):
     '''

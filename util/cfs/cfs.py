@@ -49,6 +49,13 @@ class CFSMask:
         self._border.autoDraw = True
         self._fixation.autoDraw = True
 
+    def terminate(self):
+        '''
+        triggers termination sequence
+        '''
+        if self._terminate == 0:
+            self._terminate = 1
+
     def on_flip(self, terminate = False):
         '''
         Must be called on every screen flip outside this class at the flip rate
@@ -70,8 +77,8 @@ class CFSMask:
         if self.completed:
             return # stop updating
         self._counter += 1
-        if terminate and (self._terminate == 0):
-            self._terminate = 1
+        if terminate:
+            self.terminate()
         if self._counter % self._update_on == 1: # every _update_on frames...
             self.update_mask()
 
@@ -147,6 +154,7 @@ class CFSMask:
             self._mondrians[self._current_mask].autoDraw = True
         elif self._terminate == 1:
             self._mask.autoDraw = True
+            self._fixation.autoDraw = False
             self._terminate += 1
         elif self._terminate > 1:
             self.stop()

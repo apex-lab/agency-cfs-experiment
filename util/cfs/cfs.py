@@ -47,6 +47,7 @@ class CFSMask:
         self._fixation = self.init_fixation()
         self._current_mask = None
         self._border.autoDraw = True
+        self._fixation.autoDraw = True
 
     def on_flip(self, terminate = False):
         '''
@@ -150,8 +151,6 @@ class CFSMask:
         elif self._terminate > 1:
             self.stop()
             return
-        # make sure these are always on top
-        self._fixation.autoDraw = True
 
     def stop(self):
         # make sure nothing is still autodrawing

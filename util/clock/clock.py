@@ -2,6 +2,25 @@ from psychopy.visual import Line, Circle, Polygon
 from psychopy.core import Clock
 import numpy as np
 
+def subtract_angles(a, b):
+    '''
+    returns signed angle between two angles
+
+    Parameters
+    -----------
+    a : float
+        in radians
+    b : float
+        in radians
+
+    Returns
+    ----------
+    delta : float
+        the difference a - b, in radians
+    '''
+    return (a - b + np.pi) % (2*np.pi) - np.pi
+
+
 class LibetClock:
 
     def __init__(self, win, kb, pos = (0, 0), radius = 3.2,
@@ -18,6 +37,7 @@ class LibetClock:
         self._event_t = None
         self.trial_ended = False
         self._give_feedback = feedback
+        self._data = None 
         ## draw basic clock shape (circle and ticks)
         self.ring = Circle(
             win,
@@ -112,8 +132,9 @@ class LibetClock:
         '''
         return index of pre-generated hand/marker at a given angle
         '''
+        rad %= (2*np.pi)
         clock_phase = rad / (2*np.pi)
-        idx = int(len(self.hands) * clock_phase)
+        idx = np.floor(len(self.hands) * clock_phase).astype(int)
         return idx
 
     @property
@@ -139,7 +160,7 @@ class LibetClock:
         '''
         self._event_t = t
         self._event_deg = self.time_to_deg(self._event_t)
-        self._end_t = self._event_t + np.random.choice([1., 1.5, 2.])
+        self._end_t = self._event_t + np.random.uniform(1., 2.)
         self._choice_t = self._end_t + 1.
         init_offset = np.random.uniform(np.pi/4, np.pi/3)
         init_offset *= np.random.choice([-1., 1.])
@@ -174,7 +195,15 @@ class LibetClock:
         if self._give_feedback:
             self.feedback_ticks[event_idx].autoDraw = True
         self.trial_ended = True
-
+        overest_angle = subtract_angles(resp_deg, self._event_deg)
+        overest_t = overest_angle / (2*np.pi) * self.period
+        self._data = dict(
+            event_t = self._event_t,
+            event_angle = self._event_deg,
+            resp_angle = resp_deg,
+            overest_t = overest_t,
+            overest_angle = overest_angle
+        )
 
     def update_cursor(self):
         speed = .5*np.pi / len(self.cursors)
@@ -188,7 +217,7 @@ class LibetClock:
                 self._resp_deg -= speed
             if key.name == 'right' and key.duration is None:
                 self._resp_deg += speed
-            self._resp_deg %= 2*np.pi
+            self._resp_deg %= (2*np.pi)
             if key.name == 'space':
                 self.end_trial(self._resp_deg)
         idx = self.deg_to_idx(self._resp_deg)
@@ -217,3 +246,6 @@ class LibetClock:
             self.update_cursor()
             return
         return
+
+    def get_data(self):
+        return self._data

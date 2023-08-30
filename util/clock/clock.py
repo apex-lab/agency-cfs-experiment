@@ -5,7 +5,7 @@ import numpy as np
 class LibetClock:
 
     def __init__(self, win, kb, pos = (0, 0), radius = 3.2,
-                    period = 2.56, hand_color = 'black'):
+                    period = 2.56, hand_color = 'black', feedback = True):
 
         EDGES = 256
         self.win = win
@@ -17,6 +17,7 @@ class LibetClock:
         self.clock = None
         self._event_t = None
         self.trial_ended = False
+        self._give_feedback = feedback
         ## draw basic clock shape (circle and ticks)
         self.ring = Circle(
             win,
@@ -37,10 +38,10 @@ class LibetClock:
             EDGES,                      # when they're reporting perceived time
             color = hand_color,
             fill = False,
-            length = 1.1
+            length = 1.07
             )
         # lastly, some markers to show feedback after subjects respond
-        self.feedback_ticks = self.make_ticks(EDGES, 'white', 1.1)
+        self.feedback_ticks = self.make_ticks(EDGES, 'white', 1.2)
 
     def abspos(self, relpos):
         '''
@@ -127,7 +128,7 @@ class LibetClock:
             return
         if self._event_t is not None: # event already happened
             return
-        keys = self.kb.getKeys(keyList = ['space'])
+        keys = self.kb.getKeys(keyList = ['space'], waitRelease = False)
         if keys:
             key = keys[0]
             self.critical_event(key.rt)
@@ -167,10 +168,11 @@ class LibetClock:
         return False
 
     def end_trial(self, resp_deg):
-        event_idx = self.deg_to_idx(self._event_deg)
-        self.feedback_ticks[event_idx].autoDraw = True
         resp_idx = idx = self.deg_to_idx(resp_deg)
         self.cursors[resp_idx].autoDraw = True
+        event_idx = self.deg_to_idx(self._event_deg)
+        if self._give_feedback:
+            self.feedback_ticks[event_idx].autoDraw = True
         self.trial_ended = True
 
 

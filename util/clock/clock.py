@@ -4,17 +4,19 @@ import numpy as np
 
 class LibetClock:
 
-    def __init__(self, win, pos = (0, 0), radius = 3.2,
-                    period = 2.56, framerate = 60, hand_color = 'black'):
+    def __init__(self, win, kb, pos = (0, 0), radius = 3.2,
+                    period = 2.56, hand_color = 'black'):
 
         EDGES = 256
         self.win = win
+        self.kb = kb
         self.radius = radius
         self.period = period
         self.pos = pos
-        self.framerate = framerate
+        self._start_angle = np.random.uniform(0, 2*np.pi)
         self.clock = None
         self._event_t = None
+        self.trial_ended = False
         ## draw basic clock shape (circle and ticks)
         self.ring = Circle(
             win,
@@ -26,12 +28,12 @@ class LibetClock:
             lineWidth = 5
             )
         self.ring.autoDraw = True
-        self.ticks = self.make_ticks(12, length = 1.05)
+        self.ticks = self.make_ticks(60, length = 1.05)
         for tick in self.ticks:
             tick.autoDraw = True
         ## pre-draw all positions of moving hand
         self.hands = self.make_arrows(EDGES, color = hand_color, length = 1.07)
-        self.movable_hands = self.make_arrows( # and hand that subject can move
+        self.cursors = self.make_arrows( # and hand that subject can move
             EDGES,                      # when they're reporting perceived time
             color = hand_color,
             fill = False,
@@ -91,29 +93,125 @@ class LibetClock:
 
     def start(self):
         self.clock = Clock()
+        self.kb.clock.reset()
         self.clock.reset()
 
-    def critical_event(self):
+    def time_to_deg(self, t):
         '''
-        call this when the critical event (e.g. a button press) has occured
+        return angle (in radians) corresponding corresponding to
+        a time after trial start
         '''
-        self._event_t = self.clock.time() # time in trial
-
-    def draw(self):
-        '''
-        updates clock; call this on every flip
-        '''
-        if self.clock is None: # not started yet
-            return
-        # determine which hand position should be drawn
-        t = self.clock.getTime()
         clock_phase = (t % self.period) / self.period
-        idx = np.floor(len(self.hands) * clock_phase).astype(int)
-        # and draw it!
-        self.hands[idx].draw()
+        rad = 2*np.pi * clock_phase
+        rad += self._start_angle
+        rad %= (2*np.pi)
+        return rad
+
+    def deg_to_idx(self, rad):
+        '''
+        return index of pre-generated hand/marker at a given angle
+        '''
+        clock_phase = rad / (2*np.pi)
+        idx = int(len(self.hands) * clock_phase)
+        return idx
 
     @property
     def first_rotation_complete(self):
         if self.clock is None: # not started yet
             return False
         return self.clock.getTime() > self.period
+
+    def check_for_event(self):
+        if not self.first_rotation_complete: # too soon for event
+            self.kb.clearEvents(eventType = ['space'])
+            return
+        if self._event_t is not None: # event already happened
+            return
+        keys = self.kb.getKeys(keyList = ['space'])
+        if keys:
+            key = keys[0]
+            self.critical_event(key.rt)
+
+    def critical_event(self, t):
+        '''
+        call this when the critical event (e.g. a button press) has occured
+        '''
+        self._event_t = t
+        self._event_deg = self.time_to_deg(self._event_t)
+        self._end_t = self._event_t + np.random.choice([1., 1.5, 2.])
+        self._choice_t = self._end_t + 1.
+        init_offset = np.random.uniform(np.pi/4, np.pi/3)
+        init_offset *= np.random.choice([-1., 1.])
+        self._resp_deg = self._event_deg + init_offset
+
+    @property
+    def critical_event_occured(self):
+        t = self.clock.getTime()
+        if self._event_t is None:
+            return False
+        return True
+
+    @property
+    def spinning(self):
+        if not self.critical_event_occured:
+            return True
+        if self.clock.getTime() < self._end_t:
+            return True
+        return False
+
+    @property
+    def intermission(self):
+        t = self.clock.getTime()
+        if t < self._choice_t:
+            return True
+        return False
+
+    def end_trial(self, resp_deg):
+        event_idx = self.deg_to_idx(self._event_deg)
+        self.feedback_ticks[event_idx].autoDraw = True
+        resp_idx = idx = self.deg_to_idx(resp_deg)
+        self.cursors[resp_idx].autoDraw = True
+        self.trial_ended = True
+
+
+    def update_cursor(self):
+        speed = .5*np.pi / len(self.cursors)
+        keys = self.kb.getKeys(
+            keyList = ['left', 'right', 'space'],
+            waitRelease = False,
+            clear = False
+            )
+        for key in keys: # check if currently held down
+            if key.name == 'left' and key.duration is None:
+                self._resp_deg -= speed
+            if key.name == 'right' and key.duration is None:
+                self._resp_deg += speed
+            self._resp_deg %= 2*np.pi
+            if key.name == 'space':
+                self.end_trial(self._resp_deg)
+        idx = self.deg_to_idx(self._resp_deg)
+        self.cursors[idx].draw()
+
+    def draw(self):
+        '''
+        updates clock display; call this on every flip
+        '''
+        if self.clock is None: # not started yet
+            return
+        if self.spinning:
+            # determine which position hand should be drawn
+            t = self.clock.getTime()
+            theta = self.time_to_deg(t)
+            idx = self.deg_to_idx(theta)
+            # and draw it!
+            self.hands[idx].draw()
+            if not self.critical_event_occured:
+                self.check_for_event()
+            return
+        if self.intermission: # then hand should vanish
+            self.kb.clearEvents(eventType = ['space', 'left', 'right'])
+            return
+        if not self.trial_ended:
+            self.update_cursor()
+            return
+        return

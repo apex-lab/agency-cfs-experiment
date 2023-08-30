@@ -1,11 +1,11 @@
-from psychopy.visual import Line, Circle
+from psychopy.visual import Line, Circle, Polygon
 from psychopy.core import Clock
 import numpy as np
 
 class LibetClock:
 
     def __init__(self, win, pos = (0, 0), radius = 3.2,
-                    period = 2.56, framerate = 60, hand_color = 'green'):
+                    period = 2.56, framerate = 60, hand_color = 'black'):
 
         EDGES = 256
         self.win = win
@@ -13,6 +13,9 @@ class LibetClock:
         self.period = period
         self.pos = pos
         self.framerate = framerate
+        self.clock = None
+        self._event_t = None
+        ## draw basic clock shape (circle and ticks)
         self.ring = Circle(
             win,
             radius = radius,
@@ -23,11 +26,19 @@ class LibetClock:
             lineWidth = 5
             )
         self.ring.autoDraw = True
-        self.ticks = self.make_ticks(12)
+        self.ticks = self.make_ticks(12, length = 1.05)
         for tick in self.ticks:
             tick.autoDraw = True
-        self.hands = self.make_ticks(EDGES, color = hand_color, length = 1.2)
-        self.clock = None
+        ## pre-draw all positions of moving hand
+        self.hands = self.make_arrows(EDGES, color = hand_color, length = 1.07)
+        self.movable_hands = self.make_arrows( # and hand that subject can move
+            EDGES,                      # when they're reporting perceived time
+            color = hand_color,
+            fill = False,
+            length = 1.1
+            )
+        # lastly, some markers to show feedback after subjects respond
+        self.feedback_ticks = self.make_ticks(EDGES, 'white', 1.1)
 
     def abspos(self, relpos):
         '''
@@ -57,11 +68,41 @@ class LibetClock:
             ticks.append(line)
         return ticks
 
+    def make_arrows(self, n = 12, color = 'black', fill = True, length = 1.1):
+        tick_angles = -1*np.linspace(0, 2*np.pi, n + 1)[:-1]
+        ticks = []
+        for i in range(tick_angles.size):
+            theta = tick_angles[i]
+            x = np.cos(theta) * self.radius*length
+            y = np.sin(theta) * self.radius*length
+            r = self.radius*length - self.radius
+            triangle = Polygon(
+                self.win,
+                pos = self.abspos((x, y)),
+                edges = 3,
+                radius = r,
+                ori = -np.degrees(theta) - 90.,
+                lineColor = color,
+                fillColor = color if fill else None,
+                lineWidth = self.ring.lineWidth
+            )
+            ticks.append(triangle)
+        return ticks
+
     def start(self):
         self.clock = Clock()
         self.clock.reset()
 
-    def on_flip(self):
+    def critical_event(self):
+        '''
+        call this when the critical event (e.g. a button press) has occured
+        '''
+        self._event_t = self.clock.time() # time in trial
+
+    def draw(self):
+        '''
+        updates clock; call this on every flip
+        '''
         if self.clock is None: # not started yet
             return
         # determine which hand position should be drawn

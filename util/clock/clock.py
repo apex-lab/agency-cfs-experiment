@@ -22,10 +22,53 @@ def subtract_angles(a, b):
 
 
 class LibetClock:
+    '''
+    A class that implements a Libet clock to measure intentional binding
+    effects. Currently it only measures the perceived time of the button
+    press, not of the stimulus. You may specify a function that executes
+    upon the button press, e.g. to cue an operant stimulus.
 
-    def __init__(self, win, kb, pos = (0, 0), radius = 3.2,
-                    period = 2.56, hand_color = 'black', feedback = True):
+    Usage
+    -------
+    A usage example::
 
+        clock = LibetClock(
+            win, kb, pos = (0, 0), radius = 500,
+            feedback = True, on_event = func_to_present_stimulus
+            )
+        clock.start()
+        while not clock.trial_ended:
+            clock.draw() 
+            win.flip()
+        win.flip() # to show feedback
+        trial_data = clock.get_data()
+        clock.stop() # clock autodraws until you stop it...
+
+    '''
+
+    def __init__(self, win, kb, radius, pos = (0, 0),
+                    period = 2.56, feedback = True, on_event = None):
+        '''
+        Arguments
+        ----------
+        win : psychopy.visual.Window
+        kb : psychopy.hardware.keyboard.Keyboard
+        radius : float
+            Radius of clockface.
+        pos : tuple, default: (0, 0)
+            Position on screen, in units specified at when
+            initializing `win`.
+        period : float, default: 2.56
+            The period of the clock in seconds. Subjects' button press not
+            allowed until one full rotation is complete.
+        feedback : bool, default: True
+            Whether to show the true event time on the clock at the end
+            of the trial.
+        on_event : callable, default: None
+            You may specify a function that will be called when the critical
+            event (button press) occurs. This is useful for triggering a
+            stimulus cued to the subjects' keypress.
+        '''
         EDGES = 256
         self.win = win
         self.kb = kb
@@ -37,14 +80,15 @@ class LibetClock:
         self._event_t = None
         self.trial_ended = False
         self._give_feedback = feedback
-        self._data = None 
+        self._data = None
+        self._on_event = on_event
         ## draw basic clock shape (circle and ticks)
         self.ring = Circle(
             win,
             radius = radius,
             edges = EDGES,
             pos = pos,
-            fillColor = 'grey',
+            fillColor = None,
             lineColor = 'black',
             lineWidth = 5
             )
@@ -56,7 +100,7 @@ class LibetClock:
         self.hands = self.make_arrows(EDGES, color = hand_color, length = 1.07)
         self.cursors = self.make_arrows( # and hand that subject can move
             EDGES,                      # when they're reporting perceived time
-            color = hand_color,
+            color = 'black',
             fill = False,
             length = 1.07
             )
@@ -147,7 +191,7 @@ class LibetClock:
         if not self.first_rotation_complete: # too soon for event
             self.kb.clearEvents(eventType = ['space'])
             return
-        if self._event_t is not None: # event already happened
+        if self.critical_event_occured: # event already happened
             return
         keys = self.kb.getKeys(keyList = ['space'], waitRelease = False)
         if keys:
@@ -155,9 +199,6 @@ class LibetClock:
             self.critical_event(key.rt)
 
     def critical_event(self, t):
-        '''
-        call this when the critical event (e.g. a button press) has occured
-        '''
         self._event_t = t
         self._event_deg = self.time_to_deg(self._event_t)
         self._end_t = self._event_t + np.random.uniform(1., 2.)
@@ -165,6 +206,9 @@ class LibetClock:
         init_offset = np.random.uniform(np.pi/4, np.pi/3)
         init_offset *= np.random.choice([-1., 1.])
         self._resp_deg = self._event_deg + init_offset
+        if self.on_event is None:
+            return
+        self.on_event()
 
     @property
     def critical_event_occured(self):
@@ -199,8 +243,8 @@ class LibetClock:
         overest_t = overest_angle / (2*np.pi) * self.period
         self._data = dict(
             event_t = self._event_t,
-            event_angle = self._event_deg,
-            resp_angle = resp_deg,
+            event_angle = self._event_deg * -1., # so radians increase in
+            resp_angle = resp_deg * -1., # the contentional direction.
             overest_t = overest_t,
             overest_angle = overest_angle
         )
@@ -249,3 +293,21 @@ class LibetClock:
 
     def get_data(self):
         return self._data
+
+    def close(self):
+        '''
+        make sure nothing is still autodrawing
+        '''
+        self.ring.autoDraw = False
+        for tick in self.ticks:
+            tick.autoDraw = False
+        for hand in self.hands:
+            hand.autoDraw = False
+        for cursor in self.cursors:
+            cursor.autoDraw = False
+        for tick in self.feedback_ticks:
+            tick.autoDraw = False
+
+    def __del__(self):
+        self.close()
+        del self

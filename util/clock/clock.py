@@ -38,7 +38,7 @@ class LibetClock:
             )
         clock.start()
         while not clock.trial_ended:
-            clock.draw() 
+            clock.draw()
             win.flip()
         win.flip() # to show feedback
         trial_data = clock.get_data()
@@ -97,7 +97,7 @@ class LibetClock:
         for tick in self.ticks:
             tick.autoDraw = True
         ## pre-draw all positions of moving hand
-        self.hands = self.make_arrows(EDGES, color = hand_color, length = 1.07)
+        self.hands = self.make_arrows(EDGES, color = 'black', length = 1.07)
         self.cursors = self.make_arrows( # and hand that subject can move
             EDGES,                      # when they're reporting perceived time
             color = 'black',
@@ -206,9 +206,9 @@ class LibetClock:
         init_offset = np.random.uniform(np.pi/4, np.pi/3)
         init_offset *= np.random.choice([-1., 1.])
         self._resp_deg = self._event_deg + init_offset
-        if self.on_event is None:
+        if self._on_event is None:
             return
-        self.on_event()
+        self._on_event()
 
     @property
     def critical_event_occured(self):

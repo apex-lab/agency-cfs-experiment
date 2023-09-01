@@ -56,7 +56,7 @@ class CFSMask:
         if self._terminate == 0:
             self._terminate = 1
 
-    def on_flip(self, terminate = False):
+    def draw(self, terminate = False):
         '''
         Must be called on every screen flip outside this class at the flip rate
         specified in __init__ to ensure that mask stimuli update, such as:

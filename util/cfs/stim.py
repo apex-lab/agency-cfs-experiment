@@ -25,14 +25,14 @@ class MaskedStimulus:
         self._triggered = False
         self._clock = core.Clock()
 
-    def present(self, time_from_now, duration):
+    def present(self, time_from_now, duration = .2):
         self._clock.reset(0.)
         self._onset = time_from_now
         self._offset = time_from_now + duration
         self._triggered = True
         return self.position
 
-    def on_flip(self):
+    def draw(self):
         if not self._triggered:
             return
         t = self._clock.getTime()

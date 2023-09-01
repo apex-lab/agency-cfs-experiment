@@ -154,7 +154,6 @@ class CFSMask:
             self._mondrians[self._current_mask].autoDraw = True
         elif self._terminate == 1:
             self._mask.autoDraw = True
-            self._fixation.autoDraw = False
             self._terminate += 1
         elif self._terminate > 1:
             self.stop()
@@ -162,11 +161,12 @@ class CFSMask:
 
     def stop(self):
         # make sure nothing is still autodrawing
-        self._mondrians[self._current_mask].autoDraw = False
+        if self._current_mask is not None:
+            self._mondrians[self._current_mask].autoDraw = False
         self._mask.autoDraw = False
-        self._border.autoDraw = False
-        self._fixation.autoDraw = False
         self.completed = True
 
     def __del__(self):
+        self._border.autoDraw = False
+        self._fixation.autoDraw = False
         self.stop()

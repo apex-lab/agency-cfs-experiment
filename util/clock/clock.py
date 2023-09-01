@@ -267,7 +267,7 @@ class LibetClock:
         idx = self.deg_to_idx(self._resp_deg)
         self.cursors[idx].draw()
 
-    def draw(self):
+    def draw(self, flip_rate = None):
         '''
         updates clock display; call this on every flip
         '''
@@ -275,7 +275,11 @@ class LibetClock:
             return
         if self.spinning:
             # determine which position hand should be drawn
-            t = self.clock.getTime()
+            if flip_rate is not None:
+                flip_rate_offset = 1./flip_rate
+            else:
+                flip_rate_offset = 0.
+            t = self.clock.getTime() + flip_rate_offset
             theta = self.time_to_deg(t)
             idx = self.deg_to_idx(theta)
             # and draw it!

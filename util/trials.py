@@ -23,10 +23,12 @@ def discrimination_trial(win, mask_color, mask_size, stim_color,
         mask.draw() # update stimuli
         stim.draw()
         win.flip()
+    del mask
     return stim_pos
 
 def clock_trial(win, kb, mask_color, mask_size, stim_color,
-                    stim_contrast, stim_position = None, frame_rate = 60.):
+                    stim_contrast, stim_position = None,
+                    show_mask = True, frame_rate = 60.):
     '''
     Measures action binding with a masked operant stimulus.
 
@@ -52,6 +54,11 @@ def clock_trial(win, kb, mask_color, mask_size, stim_color,
         One of 'upper_right',  'upper_left', 'lower_right', or 'lower_left'.
         This is the corner of the CFS mask the masked sitmulus should be
         drawn in. Can also be None if you want the stim position to be random.
+    show_mask : bool, default: True
+        Whether to actually mask the stimulus. If False, this will just be
+        a normal intentional binding paradigm with no flash suppression, and
+        the mask_color parameter will be ignored (but still must be specified
+        simply because I didn't bother to set a default).
     frame_rate : float, default: 60.
         The refresh rate of the monitor. This is set by the OS; you're merely
         providing it to the function so it knows how many frames should elapse
@@ -83,14 +90,16 @@ def clock_trial(win, kb, mask_color, mask_size, stim_color,
     while not clock.trial_ended:
         if not clock.spinning:
             mask.terminate()
-        mask.draw()
+        if show_mask:
+            mask.draw()
         stim.draw()
-        clock.draw()
+        clock.draw(frame_rate)
         win.flip()
     win.flip() # to show feedback
     core.wait(2.)
     data = clock.get_data()
     data['stimulus_position'] = stim.position
     del clock
+    del mask
     win.flip() # stop showing feedback
     return data

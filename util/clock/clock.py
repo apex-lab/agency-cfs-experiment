@@ -206,6 +206,7 @@ class LibetClock:
         self._choice_t = self._end_t + 1.
         init_offset = np.random.uniform(np.pi/4, np.pi/3)
         init_offset *= np.random.choice([-1., 1.])
+        self._init_offset = init_offset
         resp_angle = self._event_angle + init_offset
         self._resp_angle = resp_angle
         if self._on_event is None:
@@ -248,7 +249,8 @@ class LibetClock:
             event_angle = self._event_angle * -1., # so radians increase in
             resp_angle = resp_angle * -1., # the contentional direction.
             overest_t = overest_t,
-            overest_angle = overest_angle
+            overest_angle = overest_angle,
+            initial_offset_angle = -1*self._init_offset
         )
         self._msg.autoDraw = False
 

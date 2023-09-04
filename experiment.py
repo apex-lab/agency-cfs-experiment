@@ -99,8 +99,8 @@ except: # If we didn't, it's a big problem! So stop the experiment now.
 fields = [
     'trial', 'onset', 'masked', 'operant',  'practice', 'catch',
     'contrast', 'stimulus_position',
-    'event_t', 'event_angle', 'resp_angle', 'overest_t', 'overest_angle',
-    'aware'
+    'event_t', 'event_angle', 'resp_angle', 'overest_t', 'overest_angle', 
+    'initial_offset_angle', 'aware'
 ]
 log = TSVLogger(sub_id, 'clock', fields, LOG_DIRECTORY)
 # pick a position for operant stimulus

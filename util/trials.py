@@ -177,7 +177,8 @@ def clock_trial(win, kb, mask_color, mask_size, stim_color,
         core.wait(2.)
     trial_data = clock.get_data()
     trial_data['stimulus_position'] = stim.position
-    trial_data['catch_trial'] = catch
+    trial_data['catch'] = catch
+    trial_data['contrast'] = stim_contrast
     del clock
     del mask
 

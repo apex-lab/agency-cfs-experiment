@@ -14,6 +14,7 @@ from util.instructions import (
 )
 from psychopy import core
 import numpy as np
+import os
 
 MASK_SIZE = 500 # size of mask in pixels
 RED = (1, 0, 0)
@@ -31,6 +32,10 @@ CATCH_TRIALS = 5
 sub_num = input("Enter subject number: ")
 sub_num = int(sub_num)
 sub_id = '%02d'%sub_num
+sub_dir = os.path.join(LOG_DIRECTORY, 'sub-%s'%sub_id)
+if os.path.exists(sub_dir):
+    raise Exception('%s already exists!'%sub_dir)
+
 # init clock to keep track of time in experiment
 timer = core.Clock()
 timer.reset(0.)

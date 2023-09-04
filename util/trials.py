@@ -177,14 +177,15 @@ def clock_trial(win, kb, mask_color, mask_size, stim_color,
         core.wait(2.)
     trial_data = clock.get_data()
     trial_data['stimulus_position'] = stim.position
+    trial_data['catch_trial'] = catch
     del clock
     del mask
-    ## ask subject whether they saw a circle stimulus
-    question = 'Did you see a circle?'
-    choices = OrderedDict()
-    choices['f'] = 'yes'
-    choices['j'] = 'no'
-    resp = _collect_2AFC_resp(win, kb, question, choices)
-    trial_data['saw_circle'] = True if resp == 'yes' else False
-    trial_data['catch_trial'] = catch
+
+    if show_mask: # ask subject whether they saw a circle stimulus
+        question = 'Did you see a circle?'
+        choices = OrderedDict()
+        choices['f'] = 'yes'
+        choices['j'] = 'no'
+        resp = _collect_2AFC_resp(win, kb, question, choices)
+        trial_data['saw_circle'] = True if resp == 'yes' else False
     return trial_data

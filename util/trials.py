@@ -28,7 +28,7 @@ def discrimination_trial(win, mask_color, mask_size, stim_color,
 
 def clock_trial(win, kb, mask_color, mask_size, stim_color,
                     stim_contrast, stim_position = None,
-                    show_mask = True, frame_rate = 60.):
+                    show_mask = True, catch = False, frame_rate = 60.):
     '''
     Measures action binding with a masked operant stimulus.
 
@@ -59,6 +59,10 @@ def clock_trial(win, kb, mask_color, mask_size, stim_color,
         a normal intentional binding paradigm with no flash suppression, and
         the mask_color parameter will be ignored (but still must be specified
         simply because I didn't bother to set a default).
+    catch : bool, default: False
+        Whether this is a catch trial. On catch trials, an additional masked
+        stimulus will be presented, at maximum contrast, during the first
+        rotation of the Libet clock.
     frame_rate : float, default: 60.
         The refresh rate of the monitor. This is set by the OS; you're merely
         providing it to the function so it knows how many frames should elapse
@@ -76,6 +80,11 @@ def clock_trial(win, kb, mask_color, mask_size, stim_color,
         contrast = stim_contrast,
         position = stim_position
         )
+    catch_stim = MaskedStimulus(
+        win, stim_color, mask_size,
+        contrast = 1.,
+        position = None # i.e. choose randomly
+        )
     cue_stim = partial(stim.present, time_from_now = .15, duration = .2)
     radius = np.sqrt(2*(mask_size/2)**2)
     clock = LibetClock(
@@ -86,6 +95,10 @@ def clock_trial(win, kb, mask_color, mask_size, stim_color,
         feedback = True
         )
 
+    if catch: # pick a random time to present during first rotation 
+        assert(.5 < clock.period - .5)
+        catch_t = np.random.uniform(.5, clock.period - .5)
+        catch_stim.present(time_from_now = catch_t, duration = .2)
     clock.start()
     while not clock.trial_ended:
         if not clock.spinning:
@@ -93,6 +106,7 @@ def clock_trial(win, kb, mask_color, mask_size, stim_color,
         if show_mask:
             mask.draw()
         stim.draw()
+        catch_stim.draw()
         clock.draw(frame_rate)
         win.flip()
     win.flip() # to show feedback

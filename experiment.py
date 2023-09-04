@@ -3,6 +3,15 @@ from util.input import get_keyboard
 from util.cfs import init_window
 from util.logging import TSVLogger
 from util.bopt import QuestObject
+from util.instructions import (
+    discrimination_instructions,
+    clock_instructions_masked,
+    clock_instructions_unmasked,
+    same_as_previous_instructions,
+    post_practice_trial_instructions,
+    post_block_instructions,
+    post_experiment_instructions
+)
 from psychopy import core
 import numpy as np
 
@@ -14,7 +23,7 @@ SCREEN_SIZE = (1000, 1000) # in pixels
 LOG_DIRECTORY = 'logs'
 
 CALIBRATION_BLOCK_TRIALS = 2
-CLOCK_BLOCK_TRIALS = 2 # per block; there are four blocks
+CLOCK_BLOCK_TRIALS = 1 # per block; there are four blocks
 PRACTICE_TRIALS = 1
 CATCH_TRIALS = 1
 
@@ -55,6 +64,7 @@ delta = 0.01 # lapse rate, usually 0.01
 gamma = 0.5 # chance performance
 quest = QuestObject(tGuess, tGuessSd, pThreshold, beta, delta, gamma)
 
+discrimination_instructions(win, kb)
 for trial in range(1, CALIBRATION_BLOCK_TRIALS + 1):
     # record trial onset time
     t0 = timer.getTime()
@@ -78,6 +88,7 @@ for trial in range(1, CALIBRATION_BLOCK_TRIALS + 1):
         **trial_data
         )
 log.close()
+post_block_instructions(win, kb)
 
 ## based on behavioral results above, #########################################
 ## pick stimulation intensity for the rest of the experiment... ###############
@@ -99,7 +110,7 @@ except: # If we didn't, it's a big problem! So stop the experiment now.
 fields = [
     'trial', 'onset', 'masked', 'operant',  'practice', 'catch',
     'contrast', 'stimulus_position',
-    'event_t', 'event_angle', 'resp_angle', 'overest_t', 'overest_angle', 
+    'event_t', 'event_angle', 'resp_angle', 'overest_t', 'overest_angle',
     'initial_offset_angle', 'aware'
 ]
 log = TSVLogger(sub_id, 'clock', fields, LOG_DIRECTORY)
@@ -117,17 +128,25 @@ def clock_block(mask, operant, contrast, params, log):
     if not operant:
         contrast = 0. # for baseline condition
     # figure out trial order (i.e. which will be catch trials)
-    _catch = CATCH_TRIALS*[True] + CLOCK_BLOCK_TRIALS*[False]
+    if mask:
+        _catch = CATCH_TRIALS*[True] + CLOCK_BLOCK_TRIALS*[False]
+    else: # no catch trials needed if no masking
+        _catch = CLOCK_BLOCK_TRIALS*[False]
     np.random.shuffle(_catch)
     # add practice trials to order
     _practice = PRACTICE_TRIALS*[True] + len(_catch)*[False]
-    catch_practice = [True] + (PRACTICE_TRIALS - 1)*[False]
+    if mask:
+        catch_practice = [True] + (PRACTICE_TRIALS - 1)*[False]
+    else:
+        catch_practice = PRACTICE_TRIALS*[False]
     np.random.shuffle(catch_practice)
     _catch = catch_practice + _catch
 
     # now loop through trials
     trial_nums = range(1, len(_catch) + 1)
     for trial, practice, catch in zip(trial_nums, _practice, _catch):
+        if trial == PRACTICE_TRIALS + 1:
+            post_practice_trial_instructions(win, kb)
         t0 = timer.getTime()
         trial_data = clock_trial(
             stim_contrast = contrast,
@@ -142,10 +161,19 @@ def clock_block(mask, operant, contrast, params, log):
             operant = operant,
             **trial_data
             )
+    post_block_instructions(win, kb)
     return log
 
-# masked, baseline block
-clock_block(True, False, contrast, trial_params, log)
-# masked, operant block
-clock_block(True, True, contrast, trial_params, log)
+masked = (True, False)
+operant = [True, False]
+np.random.shuffle(operant)
+clock_instructions_masked(win, kb)
+clock_block(masked[0], operant[0], contrast, trial_params, log)
+same_as_previous_instructions(win, kb)
+clock_block(masked[0], operant[1], contrast, trial_params, log)
+clock_instructions_unmasked(win, kb)
+clock_block(masked[1], operant[0], contrast, trial_params, log)
+same_as_previous_instructions(win, kb)
+clock_block(masked[1], operant[1], contrast, trial_params, log)
 log.close()
+post_experiment_instructions(win, kb)

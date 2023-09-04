@@ -22,10 +22,10 @@ FRAME_RATE = 60.
 SCREEN_SIZE = (1000, 1000) # in pixels
 LOG_DIRECTORY = 'logs'
 
-CALIBRATION_BLOCK_TRIALS = 2
-CLOCK_BLOCK_TRIALS = 1 # per block; there are four blocks
-PRACTICE_TRIALS = 1
-CATCH_TRIALS = 1
+CALIBRATION_BLOCK_TRIALS = 100
+CLOCK_BLOCK_TRIALS = 40 # per block; there are four blocks
+PRACTICE_TRIALS = 5
+CATCH_TRIALS = 5
 
 ## experimenter inputs subject identifier from Terminal
 sub_num = input("Enter subject number: ")

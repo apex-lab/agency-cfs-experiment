@@ -57,10 +57,10 @@ def discrimination_trial(win, kb, mask_color, mask_size, stim_color,
     ## present masked stimulus
     mask = CFSMask(win, mask_color, size = mask_size)
     stim = MaskedStimulus(win, stim_color, mask_size, contrast = stim_contrast)
-    cfs_duration = 5. # seconds
+    cfs_duration = 2. # seconds
     cfs_frames = np.round(cfs_duration * frame_rate).astype(int)
     count = 0
-    stim_onset = np.random.uniform(.5, 4.5)
+    stim_onset = np.random.uniform(.25, cfs_duration - .25)
     stim_pos = stim.present(time_from_now = stim_onset, duration = .2)
     while not mask.completed:
         count += 1

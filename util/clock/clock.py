@@ -1,4 +1,4 @@
-from psychopy.visual import Line, Circle, Polygon
+from psychopy.visual import Line, Circle, Polygon, TextStim
 from psychopy.core import Clock
 import numpy as np
 
@@ -82,6 +82,7 @@ class LibetClock:
         self._give_feedback = feedback
         self._data = None
         self._on_event = on_event
+        self._msg = None
         ## draw basic clock shape (circle and ticks)
         self.ring = Circle(
             win,
@@ -248,8 +249,26 @@ class LibetClock:
             overest_t = overest_t,
             overest_angle = overest_angle
         )
+        self._msg.autoDraw = False
 
     def update_cursor(self):
+        msg = '''
+        Use arrow keys to adjust the clock hand to where it was
+        when you pressed space. Then, press space again.
+        '''
+        if self._msg is None:
+            txt_pos = self.abspos((0, 1.3*self.radius))
+            self._msg = TextStim(
+                win = self.win,
+                pos = txt_pos,
+                text = msg,
+                font = 'Arial',
+                wrapWidth = 2*self.radius,
+                contrast = 1,
+                depth = -4.0
+                )
+            self._msg.autoDraw = True
+
         speed = .5*np.pi / len(self.cursors)
         keys = self.kb.getKeys(
             keyList = ['left', 'right', 'space'],

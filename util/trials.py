@@ -27,7 +27,7 @@ def discrimination_trial(win, mask_color, mask_size, stim_color,
     return stim_pos
 
 def clock_trial(win, kb, mask_color, mask_size, stim_color,
-                    stim_contrast, stim_position = None,
+                    stim_contrast, stim_position = None, feedback = True,
                     show_mask = True, catch = False, frame_rate = 60.):
     '''
     Measures action binding with a masked operant stimulus.
@@ -54,6 +54,8 @@ def clock_trial(win, kb, mask_color, mask_size, stim_color,
         One of 'upper_right',  'upper_left', 'lower_right', or 'lower_left'.
         This is the corner of the CFS mask the masked sitmulus should be
         drawn in. Can also be None if you want the stim position to be random.
+    feedback : bool, default: True
+        Whether to show true time of button press on clock after trial ends.
     show_mask : bool, default: True
         Whether to actually mask the stimulus. If False, this will just be
         a normal intentional binding paradigm with no flash suppression, and
@@ -95,7 +97,7 @@ def clock_trial(win, kb, mask_color, mask_size, stim_color,
         feedback = True
         )
 
-    if catch: # pick a random time to present during first rotation 
+    if catch: # pick a random time to present during first rotation
         assert(.5 < clock.period - .5)
         catch_t = np.random.uniform(.5, clock.period - .5)
         catch_stim.present(time_from_now = catch_t, duration = .2)
@@ -110,7 +112,8 @@ def clock_trial(win, kb, mask_color, mask_size, stim_color,
         clock.draw(frame_rate)
         win.flip()
     win.flip() # to show feedback
-    core.wait(2.)
+    if feedback:
+        core.wait(2.)
     data = clock.get_data()
     data['stimulus_position'] = stim.position
     del clock

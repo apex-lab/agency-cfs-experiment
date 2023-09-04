@@ -162,7 +162,7 @@ class LibetClock:
         self.kb.clock.reset()
         self.clock.reset()
 
-    def time_to_deg(self, t):
+    def time_to_angle(self, t):
         '''
         return angle (in radians) corresponding corresponding to
         a time after trial start
@@ -201,12 +201,13 @@ class LibetClock:
 
     def critical_event(self, t):
         self._event_t = t
-        self._event_deg = self.time_to_deg(self._event_t)
+        self._event_angle = self.time_to_angle(self._event_t)
         self._end_t = self._event_t + np.random.uniform(1., 2.)
         self._choice_t = self._end_t + 1.
         init_offset = np.random.uniform(np.pi/4, np.pi/3)
         init_offset *= np.random.choice([-1., 1.])
-        self._resp_deg = self._event_deg + init_offset
+        resp_angle = self._event_angle + init_offset
+        self._resp_angle = resp_angle
         if self._on_event is None:
             return
         self._on_event()
@@ -233,19 +234,19 @@ class LibetClock:
             return True
         return False
 
-    def end_trial(self, resp_deg):
-        resp_idx = idx = self.deg_to_idx(resp_deg)
+    def end_trial(self, resp_angle):
+        resp_idx = idx = self.deg_to_idx(resp_angle)
         self.cursors[resp_idx].autoDraw = True
-        event_idx = self.deg_to_idx(self._event_deg)
+        event_idx = self.deg_to_idx(self._event_angle)
         if self._give_feedback:
             self.feedback_ticks[event_idx].autoDraw = True
         self.trial_ended = True
-        overest_angle = subtract_angles(resp_deg, self._event_deg)
+        overest_angle = subtract_angles(resp_angle, self._event_angle)
         overest_t = overest_angle / (2*np.pi) * self.period
         self._data = dict(
             event_t = self._event_t,
-            event_angle = self._event_deg * -1., # so radians increase in
-            resp_angle = resp_deg * -1., # the contentional direction.
+            event_angle = self._event_angle * -1., # so radians increase in
+            resp_angle = resp_angle * -1., # the contentional direction.
             overest_t = overest_t,
             overest_angle = overest_angle
         )
@@ -277,13 +278,13 @@ class LibetClock:
             )
         for key in keys: # check if currently held down
             if key.name == 'left' and key.duration is None:
-                self._resp_deg -= speed
+                self._resp_angle -= speed
             if key.name == 'right' and key.duration is None:
-                self._resp_deg += speed
-            self._resp_deg %= (2*np.pi)
+                self._resp_angle += speed
+            self._resp_angle %= (2*np.pi)
             if key.name == 'space':
-                self.end_trial(self._resp_deg)
-        idx = self.deg_to_idx(self._resp_deg)
+                self.end_trial(self._resp_angle)
+        idx = self.deg_to_idx(self._resp_angle)
         self.cursors[idx].draw()
 
     def draw(self, flip_rate = None):
@@ -299,7 +300,7 @@ class LibetClock:
             else:
                 flip_rate_offset = 0.
             t = self.clock.getTime() + flip_rate_offset
-            theta = self.time_to_deg(t)
+            theta = self.time_to_angle(t)
             idx = self.deg_to_idx(theta)
             # and draw it!
             self.hands[idx].draw()

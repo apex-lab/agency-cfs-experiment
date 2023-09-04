@@ -13,9 +13,9 @@ FRAME_RATE = 60.
 SCREEN_SIZE = (1000, 1000) # in pixels
 LOG_DIRECTORY = 'logs'
 
-CALIBRATION_BLOCK_TRIALS = 5
-CLOCK_BLOCK_TRIALS = 5 # per block; there are four blocks
-PRACTICE_TRIALS = 2
+CALIBRATION_BLOCK_TRIALS = 2
+CLOCK_BLOCK_TRIALS = 2 # per block; there are four blocks
+PRACTICE_TRIALS = 1
 CATCH_TRIALS = 1
 
 ## experimenter inputs subject identifier from Terminal
@@ -93,33 +93,59 @@ except: # If we didn't, it's a big problem! So stop the experiment now.
         Something is wrong. Probably best to send this subject home...
         '''
     )
-trial_params['stim_contrast'] = contrast
 
 ## Now let's start the main experiment. #######################################
 # initalize new logger
 fields = [
-    'trial', 'practice', 'catch', 'onset',
+    'trial', 'onset', 'masked', 'operant',  'practice', 'catch',
     'contrast', 'stimulus_position',
     'event_t', 'event_angle', 'resp_angle', 'overest_t', 'overest_angle',
-    'saw_circle'
+    'aware'
 ]
 log = TSVLogger(sub_id, 'clock', fields, LOG_DIRECTORY)
 # pick a position for operant stimulus
-stim_pos = np.random.choice([
+trial_params['stim_position'] = np.random.choice([
     'upper_left', 'upper_right',
     'lower_left', 'lower_right'
     ])
-trial_params['stim_position'] = stim_pos
-# start with practice trials
-catch = np.array([True] + (PRACTICE_TRIALS - 1)*[False]) # include 1 catch trial
-np.random.shuffle(catch)
-practice = True
-for trial in range(1, PRACTICE_TRIALS + 1):
-    t0 = timer.getTime()
-    trial_data = clock_trial(
-        show_mask = True,
-        catch = catch[trial - 1],
-        **trial_params
-        )
-    log.write(trial = trial, onset = t0, practice = True, **trial_data)
+
+def clock_block(mask, operant, contrast, params, log):
+    '''
+    define how a single block will go
+    '''
+    # set stim intensity to zero for baseline trials
+    if not operant:
+        contrast = 0. # for baseline condition
+    # figure out trial order (i.e. which will be catch trials)
+    _catch = CATCH_TRIALS*[True] + CLOCK_BLOCK_TRIALS*[False]
+    np.random.shuffle(_catch)
+    # add practice trials to order
+    _practice = PRACTICE_TRIALS*[True] + len(_catch)*[False]
+    catch_practice = [True] + (PRACTICE_TRIALS - 1)*[False]
+    np.random.shuffle(catch_practice)
+    _catch = catch_practice + _catch
+
+    # now loop through trials
+    trial_nums = range(1, len(_catch) + 1)
+    for trial, practice, catch in zip(trial_nums, _practice, _catch):
+        t0 = timer.getTime()
+        trial_data = clock_trial(
+            stim_contrast = contrast,
+            show_mask = mask,
+            catch = catch,
+            **params
+            )
+        log.write(
+            trial = trial,
+            onset = t0,
+            practice = practice,
+            operant = operant,
+            **trial_data
+            )
+    return log
+
+# masked, baseline block
+clock_block(True, False, contrast, trial_params, log)
+# masked, operant block
+clock_block(True, True, contrast, trial_params, log)
 log.close()

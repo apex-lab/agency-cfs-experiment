@@ -179,6 +179,7 @@ def clock_trial(win, kb, mask_color, mask_size, stim_color,
     trial_data['stimulus_position'] = stim.position
     trial_data['catch'] = catch
     trial_data['contrast'] = stim_contrast
+    trial_data['masked'] = show_mask
     del clock
     del mask
 
@@ -188,5 +189,5 @@ def clock_trial(win, kb, mask_color, mask_size, stim_color,
         choices['f'] = 'yes'
         choices['j'] = 'no'
         resp = _collect_2AFC_resp(win, kb, question, choices)
-        trial_data['saw_circle'] = True if resp == 'yes' else False
+        trial_data['aware'] = True if resp == 'yes' else False
     return trial_data

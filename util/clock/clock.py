@@ -1,5 +1,4 @@
 from psychopy.visual import Line, Circle, Polygon, TextStim
-from psychopy.core import Clock
 import numpy as np
 
 def subtract_angles(a, b):
@@ -158,9 +157,8 @@ class LibetClock:
         return ticks
 
     def start(self):
-        self.clock = Clock()
+        self.clock = self.kb.clock
         self.kb.clock.reset()
-        self.clock.reset()
 
     def time_to_angle(self, t):
         '''

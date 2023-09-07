@@ -52,6 +52,18 @@ def discrimination_instructions(win, kb):
     so faint that it is very difficult to see.
 
     If you are unsure which side the circle was on, please make your best guess.
+    This task is difficult, and it is normal to have to guess on many trials.
+    '''
+    show_instructions(win, kb, msg)
+    msg = '''
+    Please keep your gaze fixated at the cross (+)
+    in the middle of the screen during the task.
+
+    Please DO NOT attempt to cheat by closing one eye
+    or by crossing your eyes.
+
+    Again, the task is quite difficult and it is expected you
+    will have to guess often.
     '''
     show_instructions(win, kb, msg)
     msg = '''

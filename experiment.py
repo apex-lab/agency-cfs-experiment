@@ -16,12 +16,13 @@ from psychopy import core
 import numpy as np
 import os
 
-MASK_SIZE = 500 # size of mask in pixels
+MASK_SIZE = 370 # size of mask in pixels
 RED = (1, 0, 0)
 BLUE = (0, 0, 1)
 FRAME_RATE = 60.
-SCREEN_SIZE = (1000, 1000) # in pixels
+SCREEN_SIZE = (1920, 1080) # in pixels
 LOG_DIRECTORY = 'logs'
+KB_NAME = 'Dell Dell USB Keyboard'
 
 CALIBRATION_BLOCK_TRIALS = 100
 CLOCK_BLOCK_TRIALS = 40 # per block; there are four blocks
@@ -40,8 +41,13 @@ if os.path.exists(sub_dir):
 timer = core.Clock()
 timer.reset(0.)
 
-win = init_window(size = SCREEN_SIZE, units = 'pix')
-kb = get_keyboard()
+win = init_window(
+    size = SCREEN_SIZE,
+    units = 'pix',
+    screen = -1,
+    allowGUI = False
+    )
+kb = get_keyboard(KB_NAME)
 trial_params = dict(
     win = win,
     kb = kb,
@@ -61,13 +67,13 @@ fields = [
     ]
 log = TSVLogger(sub_id, 'discrimination', fields, LOG_DIRECTORY)
 # initialize QUEST with log-scale priors
-tGuess = np.log10(.5) # prior mean on log10 scale
-tGuessSd = 3.0 # sd of Gaussian prior; be generous
+tGuess = -1. # prior mean on log10 scale
+tGuessSd = 3.0 # sd of Gaussian prior before clipping to range; be generous
 pThreshold = 0.525 # threshold criterion (i.e. minimum accuracy of interest)
 beta = 3.5 # slope to use during optimization (3.5 if on log10 scale)
 delta = 0.01 # lapse rate, usually 0.01
 gamma = 0.5 # chance performance
-quest = QuestObject(tGuess, tGuessSd, pThreshold, beta, delta, gamma)
+quest = QuestObject(tGuess, tGuessSd, pThreshold, beta, delta, gamma, range = 2.)
 
 discrimination_instructions(win, kb)
 for trial in range(1, CALIBRATION_BLOCK_TRIALS + 1):
@@ -118,7 +124,6 @@ fields = [
     'event_t', 'event_angle', 'resp_angle', 'overest_t', 'overest_angle',
     'initial_offset_angle', 'aware'
 ]
-log = TSVLogger(sub_id, 'clock', fields, LOG_DIRECTORY)
 # pick a position for operant stimulus
 trial_params['stim_position'] = np.random.choice([
     'upper_left', 'upper_right',
@@ -150,6 +155,10 @@ def clock_block(mask, operant, contrast, params, log):
     # now loop through trials
     trial_nums = range(1, len(_catch) + 1)
     for trial, practice, catch in zip(trial_nums, _practice, _catch):
+        if trial <= PRACTICE_TRIALS:
+            feedback = True
+        else:
+            feedback = False
         if trial == PRACTICE_TRIALS + 1:
             post_practice_trial_instructions(win, kb)
         t0 = timer.getTime()
@@ -157,6 +166,7 @@ def clock_block(mask, operant, contrast, params, log):
             stim_contrast = contrast,
             show_mask = mask,
             catch = catch,
+            feedback = feedback,
             **params
             )
         log.write(
@@ -172,10 +182,13 @@ def clock_block(mask, operant, contrast, params, log):
 masked = (True, False)
 operant = [True, False]
 np.random.shuffle(operant)
+log = TSVLogger(sub_id, 'masked', fields, LOG_DIRECTORY)
 clock_instructions_masked(win, kb)
 clock_block(masked[0], operant[0], contrast, trial_params, log)
 same_as_previous_instructions(win, kb)
 clock_block(masked[0], operant[1], contrast, trial_params, log)
+log.close()
+log = TSVLogger(sub_id, 'unmasked', fields, LOG_DIRECTORY)
 clock_instructions_unmasked(win, kb)
 clock_block(masked[1], operant[0], contrast, trial_params, log)
 same_as_previous_instructions(win, kb)

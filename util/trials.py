@@ -154,7 +154,7 @@ def clock_trial(win, kb, mask_color, mask_size, stim_color,
         pos = (0, 0),
         radius = radius,
         on_event = cue_stim, # executes on keypress,
-        feedback = True
+        feedback = feedback
         )
     if catch: # pick a random time to present during first rotation
         assert(.5 < clock.period - .5)

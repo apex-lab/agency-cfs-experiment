@@ -85,7 +85,7 @@ for trial in range(1, CALIBRATION_BLOCK_TRIALS + 1):
     post_5th_perc = quest.quantile(.05)
     post_95th_perc = quest.quantile(.95)
     # next contrast will be mean of current posterior
-    contrast = 10**post_mean # convert back from log scale
+    contrast = exp_mean # convert back from log scale
     contrast = np.clip(contrast, a_min = 0., a_max = 1.) # enforce range
     # now see if subject can tell us what side masked stim is on
     trial_data = discrimination_trial(stim_contrast = contrast, **trial_params)

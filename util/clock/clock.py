@@ -264,7 +264,7 @@ class LibetClock:
                 pos = txt_pos,
                 text = msg,
                 font = 'Arial',
-                wrapWidth = 2*self.radius,
+                wrapWidth = 3*self.radius,
                 contrast = 1,
                 depth = -4.0
                 )

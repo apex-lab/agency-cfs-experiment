@@ -22,7 +22,13 @@ def _collect_2AFC_resp(win, kb, question, choices):
     '''
     assert(len(choices) == 2)
     vbs = [key for key in choices] # valid buttons
-    _fill_in = (vbs[0], choices[vbs[0]], vbs[1], choices[vbs[1]])
+    _vbs = []
+    for i, vb in enumerate(vbs):
+        if vb == 'left' or vb == 'right':
+            _vbs.append(vb + ' arrow') # change key name for display only 
+        else:
+            _vbs.append(vb)
+    _fill_in = (_vbs[0], choices[vbs[0]], _vbs[1], choices[vbs[1]])
     msg = question + "\n\nPress '%s' for '%s' or '%s' for '%s.'"%_fill_in
     txt = visual.TextStim(win, text = msg, font = 'Arial')
     txt.draw()
@@ -74,8 +80,8 @@ def discrimination_trial(win, kb, mask_color, mask_size, stim_color,
     ## ask subject what side of mask stimulus appeared on
     question = 'Which side was the circle on?'
     choices = OrderedDict()
-    choices['f'] = 'left'
-    choices['j'] = 'right'
+    choices['left'] = 'left'
+    choices['left'] = 'right'
     resp = _collect_2AFC_resp(win, kb, question, choices)
     trial_data = dict(
         stimulus_position = stim_pos,
@@ -92,7 +98,8 @@ def clock_trial(win, kb, mask_color, mask_size, stim_color,
     Measures action binding with a masked operant stimulus.
 
     For baseline condition (i.e. no operant stimulus), just set stim_contrast
-    to zero. This ensures code/timing is exactly the same for both conditions,
+    to zero. This ensures code/timing is exactlle on?'
+    choices = OrderedDict()y the same for both conditions,
     since psychopy technically still draws an (invisible) stimulus.
 
     Arguments
@@ -186,8 +193,8 @@ def clock_trial(win, kb, mask_color, mask_size, stim_color,
     if show_mask: # ask subject whether they saw a circle stimulus
         question = 'Did you see a circle?'
         choices = OrderedDict()
-        choices['f'] = 'yes'
-        choices['j'] = 'no'
+        choices['left'] = 'yes'
+        choices['right'] = 'no'
         resp = _collect_2AFC_resp(win, kb, question, choices)
         trial_data['aware'] = True if resp == 'yes' else False
     return trial_data

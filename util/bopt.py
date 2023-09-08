@@ -21,14 +21,3 @@ class QuestObject(_QuestObject):
         '''
         p = self.pdf / self.pdf.sum()
         return self.tGuess + np.random.choice(self.x, p = p)
-
-    def mean_exp(self, base = 10):
-        '''
-        Returns the posterior expectation of the exponentiated distribution.
-
-        This is handy when converting back from log10 scale, since
-        10**mean(x) != mean(10**x) in general.
-        '''
-        _x = self.tGuess + self.x
-        exp_x = base**_x
-        return np.sum(self.pdf * exp_x) / np.sum(self.pdf)

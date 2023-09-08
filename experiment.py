@@ -63,11 +63,11 @@ fields = [
     'trial', 'onset',
     'contrast', 'stimulus_position',
     'response', 'correct',
-    'logC_5th_perc', 'logC_mean', 'C_mean', 'logC_95th_perc'
+    'logC_5th_perc', 'logC_mean', 'logC_95th_perc'
     ]
 log = TSVLogger(sub_id, 'discrimination', fields, LOG_DIRECTORY)
 # initialize QUEST with log-scale priors for threshold location
-tGuess, tGuessSd = -.5, .5 # results in psychopy scale: mean ~ .6, sd ~ 1.
+tGuess, tGuessSd = np.log10(.5), 3.
 # psychometric function params
 pThreshold = 0.525 # threshold criterion (i.e. minimum accuracy of interest)
 beta = 3.5 # slope to use during optimization (3.5 if on log10 scale)
@@ -81,11 +81,10 @@ for trial in range(1, CALIBRATION_BLOCK_TRIALS + 1):
     t0 = timer.getTime()
     # get descriptive stats of current posterior for records
     post_mean = quest.mean() # mean on log scale
-    exp_mean = quest.mean_exp() # mean on psychopy scale
     post_5th_perc = quest.quantile(.05)
     post_95th_perc = quest.quantile(.95)
     # next contrast will be mean of current posterior
-    contrast = exp_mean # convert back from log scale
+    contrast = 10**post_mean # convert back from log scale
     contrast = np.clip(contrast, a_min = 0., a_max = 1.) # enforce range
     # now see if subject can tell us what side masked stim is on
     trial_data = discrimination_trial(stim_contrast = contrast, **trial_params)
@@ -97,7 +96,6 @@ for trial in range(1, CALIBRATION_BLOCK_TRIALS + 1):
         trial = trial,
         onset = t0,
         logC_mean = post_mean,
-        C_mean = exp_mean,
         logC_5th_perc = post_5th_perc,
         logC_95th_perc = post_95th_perc,
         **trial_data

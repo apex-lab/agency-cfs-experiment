@@ -12,12 +12,23 @@ class QuestObject(_QuestObject):
         p = self.pdf[int(i)]
         return p
 
-    def draw_from_post(self):
+    def draw_from_post(self, lower_cutoff = None):
         '''
         Returns a draw from the posterior distribution. Using this method
         to pick your next sample is called "Thompson sampling," which has
-        nicer convergence properties in some case than e.g. just picking
+        nicer convergence properties in some cases than e.g. just picking
         the mean.
+
+        In the particular case of fitting a Weibull function, sampling values
+        below the threshold may not provide as much new information about the
+        threshold parameter, especially if you've picked a threshold criterion
+        close to 50% accuracy (since everything below that will be practically
+        chance accuracy). So you can use the `lower_cutoff` argument to truncate
+        the posterior before drawing a sample. 
         '''
-        p = self.pdf / self.pdf.sum()
+        if lower_cutoff:
+            _x = self.tGuess + self.x
+            above_bound = _x >= lower_cutoff
+            pdf = self.pdf * above_bound # truncate the posterior
+        p = pdf / pdf.sum()
         return self.tGuess + np.random.choice(self.x, p = p)

@@ -67,7 +67,7 @@ fields = [
     ]
 log = TSVLogger(sub_id, 'discrimination', fields, LOG_DIRECTORY)
 # initialize QUEST with log-scale priors for threshold location
-tGuess, tGuessSd = np.log10(.5), 3.
+tGuess, tGuessSd = -.5, .5 # approximately mean ~ .6, sd ~ 1. on linear scale
 # psychometric function params
 pThreshold = 0.525 # threshold criterion (i.e. minimum accuracy of interest)
 beta = 3.5 # slope to use during optimization (3.5 if on log10 scale)
@@ -83,8 +83,8 @@ for trial in range(1, CALIBRATION_BLOCK_TRIALS + 1):
     post_mean = quest.mean() # mean on log scale
     post_5th_perc = quest.quantile(.05)
     post_95th_perc = quest.quantile(.95)
-    # next contrast will be mean of current posterior
-    contrast = 10**post_mean # convert back from log scale
+    # next contrast drawn from mean-truncated posterior, i.e. Thompson sampling
+    contrast = 10**quest.draw_from_post(lower_cutoff = post_mean)
     contrast = np.clip(contrast, a_min = 0., a_max = 1.) # enforce range
     # now see if subject can tell us what side masked stim is on
     trial_data = discrimination_trial(stim_contrast = contrast, **trial_params)

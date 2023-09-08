@@ -63,26 +63,29 @@ fields = [
     'trial', 'onset',
     'contrast', 'stimulus_position',
     'response', 'correct',
-    'post_5th_perc', 'post_mean', 'post_95th_perc'
+    'logC_5th_perc', 'logC_mean', 'C_mean', 'logC_95th_perc'
     ]
 log = TSVLogger(sub_id, 'discrimination', fields, LOG_DIRECTORY)
-# initialize QUEST with log-scale priors
-tGuess = -1. # prior mean on log10 scale
-tGuessSd = 3.0 # sd of Gaussian prior before clipping to range; be generous
+# initialize QUEST with log-scale priors for threshold location
+tGuess, tGuessSd = -.5, .5 # results in psychopy scale: mean ~ .6, sd ~ 1.
+# psychometric function params
 pThreshold = 0.525 # threshold criterion (i.e. minimum accuracy of interest)
 beta = 3.5 # slope to use during optimization (3.5 if on log10 scale)
 delta = 0.01 # lapse rate, usually 0.01
 gamma = 0.5 # chance performance
-quest = QuestObject(tGuess, tGuessSd, pThreshold, beta, delta, gamma, range = 2.)
+quest = QuestObject(tGuess, tGuessSd, pThreshold, beta, delta, gamma)
 
 discrimination_instructions(win, kb)
 for trial in range(1, CALIBRATION_BLOCK_TRIALS + 1):
     # record trial onset time
     t0 = timer.getTime()
-    # next stimulus contrast is mean of current threshold posterior
-    post_mean = 10**quest.mean() # convert back from log10 scale
-    post_5th_perc = 10**quest.quantile(.05)
-    post_95th_perc = 10**quest.quantile(.95)
+    # get descriptive stats of current posterior for records
+    post_mean = quest.mean() # mean on log scale
+    exp_mean = quest.mean_exp() # mean on psychopy scale
+    post_5th_perc = quest.quantile(.05)
+    post_95th_perc = quest.quantile(.95)
+    # next contrast will be a draw from current posterior, i.e. Thompson sample
+    contrast = 10**quest.draw_from_post() # convert back from log scale
     contrast = np.clip(post_mean, a_min = 0., a_max = 1.) # enforce range
     # now see if subject can tell us what side masked stim is on
     trial_data = discrimination_trial(stim_contrast = contrast, **trial_params)
@@ -93,9 +96,10 @@ for trial in range(1, CALIBRATION_BLOCK_TRIALS + 1):
     log.write(
         trial = trial,
         onset = t0,
-        post_mean = post_mean,
-        post_5th_perc = post_5th_perc,
-        post_95th_perc = post_95th_perc,
+        logC_mean = post_mean,
+        C_mean = exp_mean,
+        logC_5th_perc = post_5th_perc,
+        logC_95th_perc = post_95th_perc,
         **trial_data
         )
 log.close()
@@ -106,15 +110,7 @@ post_block_instructions(win, kb)
 quest.beta_analysis() # Re-fit with slope as free parameter,
 contrast = 10**quest.quantile(.05) # and use lower edge of .9 credible interval
 print('\n\nBelow-threshold contrast is %.03f.\n\n'%contrast)
-try: # check that we got a reasonable value
-    assert(contrast > 0.)
-except: # If we didn't, it's a big problem! So stop the experiment now.
-    raise Exception(
-        '''
-        Optimization procedure yielded a negative contrast!
-        Something is wrong. Probably best to send this subject home...
-        '''
-    )
+contrast = np.min([contrast, 1.]) # clip back to range
 
 ## Now let's start the main experiment. #######################################
 # initalize new logger

@@ -25,7 +25,7 @@ def _collect_2AFC_resp(win, kb, question, choices):
     _vbs = []
     for i, vb in enumerate(vbs):
         if vb == 'left' or vb == 'right':
-            _vbs.append(vb + ' arrow') # change key name for display only 
+            _vbs.append(vb + ' arrow') # change key name for display only
         else:
             _vbs.append(vb)
     _fill_in = (_vbs[0], choices[vbs[0]], _vbs[1], choices[vbs[1]])
@@ -81,7 +81,7 @@ def discrimination_trial(win, kb, mask_color, mask_size, stim_color,
     question = 'Which side was the circle on?'
     choices = OrderedDict()
     choices['left'] = 'left'
-    choices['left'] = 'right'
+    choices['right'] = 'right'
     resp = _collect_2AFC_resp(win, kb, question, choices)
     trial_data = dict(
         stimulus_position = stim_pos,

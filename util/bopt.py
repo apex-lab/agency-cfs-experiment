@@ -16,7 +16,8 @@ class QuestObject(_QuestObject):
         '''
         Returns a draw from the posterior distribution. Using this method
         to pick your next sample is called "Thompson sampling," which has
-        provably nicer convergence properties than e.g. just picking the mean.
+        nicer convergence properties in some case than e.g. just picking
+        the mean.
         '''
         p = self.pdf / self.pdf.sum()
         return self.tGuess + np.random.choice(self.x, p = p)

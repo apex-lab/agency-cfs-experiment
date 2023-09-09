@@ -121,6 +121,7 @@ class CFSMask:
     def init_fixation(self):
         fixation = visual.TextStim(
             win = self.win,
+            pos = self.pos,
             text = '+',
             ori = 0,
             color = (-1, -1, -1), # black
